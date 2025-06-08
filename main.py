@@ -7,7 +7,7 @@ app = FastAPI()
 
 @app.get("/")
 def root():
-    return {"status": "Deriv Signal API — try /signal?symbol=R_25, R_100, or JD_25"}
+    return {"status": "Deriv Signal API — try /signal?symbol=R_25, R_100, or JD25"}
 
 
 # ───────── helper to turn 40 candles into a trade idea ─────────
