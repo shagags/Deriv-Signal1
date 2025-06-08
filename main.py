@@ -1,15 +1,16 @@
 from fastapi import FastAPI, Query
 import json, websocket, pandas as pd, datetime, os
 
-APP_ID = os.getenv("DERIV_APP_ID", "1089")       # set in Render dashboard
+APP_ID = os.getenv("DERIV_APP_ID", "1089")            # override in Render
 app = FastAPI()
 
 
-@app.get("/")                                    # friendly root
+@app.get("/")
 def root():
-    return {"status": "Deriv Signal API • try /signal?symbol=R_25"}
+    return {"status": "Deriv Signal API — try /signal?symbol=R_25, R_100, or JD_25"}
 
 
+# ───────── helper to turn 40 candles into a trade idea ─────────
 def compute_signal(candles: list[dict]) -> dict:
     closes = [c["close"] for c in candles]
     lows   = [c["low"]   for c in candles]
@@ -27,7 +28,7 @@ def compute_signal(candles: list[dict]) -> dict:
     elif last < lower and prev < lower:
         signal = "BUY"
 
-    # --- take-profit (mid-band) & stop-loss (band extreme ±1 σ) ---
+    # take-profit = mid-band | stop-loss = band extreme ±1 σ
     if signal == "BUY":
         tp = round(mid, 3)
         sl = round(min(min(lows[-2:]), lower) - std, 3)
@@ -46,6 +47,7 @@ def compute_signal(candles: list[dict]) -> dict:
     }
 
 
+# ───────── fetch 40 one-minute candles from Deriv WS ─────────
 def get_signal(symbol: str) -> dict:
     ws = websocket.create_connection(
         f"wss://ws.derivws.com/websockets/v3?app_id={APP_ID}"
@@ -60,15 +62,23 @@ def get_signal(symbol: str) -> dict:
     resp = json.loads(ws.recv())
     ws.close()
 
-    candles = resp["candles"] if "candles" in resp else resp["history"]["candles"]
+    candles = resp.get("candles") or resp["history"]["candles"]
     return compute_signal(candles)
 
 
+# ───────── REST endpoint ─────────
 @app.get("/signal")
-def signal(symbol: str = Query("R_25", pattern="^R_(25|100)$")):
+def signal(
+    symbol: str = Query(
+        "R_25",
+        description="R_25 (Vol 25) | R_100 (Vol 100) | JD_25 (Jump 25)",
+        regex="^(R_(25|100)|JD_25)$"
+    )
+):
     """
     Examples:
-      /signal?symbol=R_25
-      /signal?symbol=R_100
+      /signal?symbol=R_25   → Volatility 25
+      /signal?symbol=R_100  → Volatility 100
+      /signal?symbol=JD_25  → Jump 25
     """
     return get_signal(symbol)
