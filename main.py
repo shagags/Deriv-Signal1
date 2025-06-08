@@ -71,14 +71,14 @@ def get_signal(symbol: str) -> dict:
 def signal(
     symbol: str = Query(
         "R_25",
-        description="R_25 (Vol 25) | R_100 (Vol 100) | JD_25 (Jump 25)",
-        regex="^(R_(25|100)|JD_25)$"
+        description="R_25 (Vol 25) | R_100 (Vol 100) | JD25 (Jump 25)",
+        regex="^(R_(25|100)|JD25)$"
     )
 ):
     """
     Examples:
       /signal?symbol=R_25   → Volatility 25
       /signal?symbol=R_100  → Volatility 100
-      /signal?symbol=JD_25  → Jump 25
+      /signal?symbol=JD25  → Jump 25
     """
     return get_signal(symbol)
