@@ -4,6 +4,9 @@ import json, websocket, pandas as pd, datetime, os
 APP_ID  = os.getenv("DERIV_APP_ID", "1089")  # set later in Render
 app = FastAPI()
 
+def root():
+    return {"status": "Deriv Signal API. Try /signal?symbol=R_25"}
+
 def get_signal(symbol: str):
     ws = websocket.create_connection(
         f"wss://ws.derivws.com/websockets/v3?app_id={APP_ID}")
